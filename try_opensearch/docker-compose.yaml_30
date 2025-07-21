@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  opensearch:
+    image: opensearchproject/opensearch:3.1.0
+    container_name: opensearch
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=MyS3cur3P123123123ppPP
+      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - osdata:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    networks:
+      - efk
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:3.1.0
+    container_name: opensearch-dashboards
+    depends_on:
+      - opensearch
+    environment:
+      - OPENSEARCH_HOSTS=https://opensearch:9200
+      - OPENSEARCH_USERNAME=admin
+      - OPENSEARCH_PASSWORD=MyS3cur3P123123123ppPP
+    ports:
+      - "5601:5601"
+    networks:
+      - efk
+
+  fluentbit:
+    image: fluent/fluent-bit:3.0.0
+    container_name: fluentbit
+    depends_on:
+      - opensearch
+    volumes:
+      - ./alog1:/var/log/mountlog:ro
+      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+    networks:
+      - efk
+    command: ["/fluent-bit/bin/fluent-bit", "-c", "/fluent-bit/etc/fluent-bit.conf"]
+
+volumes:
+  osdata:
+
+networks:
+  efk:
