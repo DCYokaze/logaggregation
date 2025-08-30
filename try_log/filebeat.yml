@@ -4,9 +4,35 @@ filebeat.inputs:
     paths:
       - /var/log/mountlog/f1.log
 
+processors:
+  - dissect:
+      tokenizer: "%{log.timestamp} - %{log.level} - %{log.message}"
+      field: "message"
+      target_prefix: ""
+      ignore_failure: true
+
+  - dissect:
+      when:
+        not.has_fields: ['log.level']
+      tokenizer: "%{log.timestamp} - %{log.message}"
+      field: "message"
+      target_prefix: ""
+      ignore_failure: true
+
+  - timestamp:
+      field: log.timestamp
+      layouts:
+        - '2006-01-02 15:04:05.000'
+        - '2006-01-02 15:04:05'
+        - '2006-01-02T15:04:05.000Z'
+      test:
+        - '2025-06-27 14:44:50.625'
+      ignore_missing: true
+      ignore_failure: true
+
+
 setup.kibana:
   host: "http://kibana:5601"
 
 output.elasticsearch:
   hosts: ["http://elasticsearch:9200"]
-
